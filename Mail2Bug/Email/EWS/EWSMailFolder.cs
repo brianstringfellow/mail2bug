@@ -10,16 +10,13 @@ namespace Mail2Bug.Email.EWS
     class EWSMailFolder : IMailFolder
     {
         private readonly Folder _folder;
+        private readonly PullSubscription subscription;
         private static readonly ILog Logger = LogManager.GetLogger(typeof(EWSMailFolder));
 
         public EWSMailFolder(Folder folder)
         {
             _folder = folder;
-        }
-
-        public int GetTotalCount()
-        {
-            return _folder.TotalCount;
+            subscription = _folder.Service.SubscribeToPullNotifications(new FolderId[] { folder.Id }, 30, null, EventType.NewMail);
         }
 
         public IEnumerable<IIncomingEmailMessage> GetMessages()
@@ -31,8 +28,21 @@ namespace Mail2Bug.Email.EWS
                 return new List<IIncomingEmailMessage>();
             }
 
+            List<Item> items = new List<Item>();
+
+            // Gets new email messages that were recieved after the initial startup.
+            GetEventsResults eventResults = subscription.GetEvents();
+            foreach (ItemEvent itemEvent in eventResults.ItemEvents)
+            {
+                Item item = Item.Bind(_folder.Service, itemEvent.ItemId);
+                items.Add(item);
+            }
+
+            // Gets new email messages on the initial startup.
             var view = new ItemView(itemCount);
-            var items = _folder.FindItems(view);
+            List<Item> itemsToAdd = _folder.FindItems(view).ToList();
+            items.AddRange(itemsToAdd);
+
             Logger.InfoFormat("Items found: {0}", items.Count());
 
             var messages = new List<IIncomingEmailMessage>();

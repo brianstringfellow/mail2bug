@@ -221,11 +221,13 @@
             EWSConnection ewsConnection = default(EWSConnection);
             try
             {
+                EWSMailFolder ewsMailFolder = new EWSMailFolder(Folder.Bind(exchangeService, WellKnownFolderName.Inbox));
+                RecipientsMailboxManagerRouter router = new RecipientsMailboxManagerRouter(ewsMailFolder);
+
                 ewsConnection = new EWSConnection
                 {
                     Service = exchangeService,
-                    Router = new RecipientsMailboxManagerRouter(
-                        new EWSMailFolder(Folder.Bind(exchangeService, WellKnownFolderName.Inbox)))
+                    Router = router
                 };
             }
             catch (Exception ex)
