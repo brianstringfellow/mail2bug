@@ -198,9 +198,7 @@ namespace Mail2Bug.WorkItemManagement
             return workItem;
         }
 
-        /// <param name="values">The list of fields and their desired values to apply to the work item</param>
-        /// <returns>Work item ID of the newly created work item</returns>
-        public long CreateWorkItem(Dictionary<string, string> values)
+        public long CreateWorkItem(Dictionary<string, string> values, Dictionary<string, string> overrides)
         {
             if (values == null)
             {

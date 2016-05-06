@@ -280,7 +280,7 @@
             return incident;
         }
 
-        public long CreateWorkItem(Dictionary<string, string> values)
+        public long CreateWorkItem(Dictionary<string, string> values, Dictionary<string, string> overrides)
         {
             AlertSourceIncident incident = CreateIncidentWithDefaults(values);
             if (connectorClient == null)
@@ -288,7 +288,7 @@
                 connectorClient = ConnectToIcmInstance();
             }
 
-            ApplyOverrides(ref incident, values);
+            ApplyOverrides(ref incident, overrides);
 
             long incidentId = 0;
             IncidentAddUpdateResult result = connectorClient.AddOrUpdateIncident2(
@@ -348,6 +348,11 @@
                 try
                 {
                     var prop = incidentType.GetRuntimeProperty(val.Key);
+                    if (prop == null)
+                    {
+                        Logger.Info($"Corresponding override property not found for '{val.Key}'.");
+                        continue;
+                    }
 
                     if (prop.PropertyType == typeof(string) && prop.CanWrite)
                         prop.SetValue(incident, val.Value);

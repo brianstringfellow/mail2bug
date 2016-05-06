@@ -11,9 +11,7 @@ namespace Mail2Bug.WorkItemManagement
 
         void CacheWorkItem(long workItemId);
 
-        /// <param name="values">Field Values</param>
-        /// <returns>Bug ID</returns>
-        long CreateWorkItem(Dictionary<string, string> values);
+        long CreateWorkItem(Dictionary<string, string> values, Dictionary<string, string> overrides);
 
         /// <param name="workItemId">The ID of the bug to modify </param>
         /// <param name="comment">Comment to add to description</param>

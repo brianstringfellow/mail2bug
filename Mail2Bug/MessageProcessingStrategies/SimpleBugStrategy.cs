@@ -53,29 +53,23 @@ namespace Mail2Bug.MessageProcessingStrategies
 
             InitWorkItemFields(message, workItemUpdates);
 
-            var workItemId = _workItemManager.CreateWorkItem(workItemUpdates);
-            Logger.InfoFormat(
-                "Added new work item {0} for message with subject: {1} (conversation index:{2})",
-                workItemId,
-                message.Subject,
-                message.ConversationIndex);
+            var overrides = new OverridesExtractor(_config).GetOverrides(message);
 
-            try
+            var workItemId = _workItemManager.CreateWorkItem(workItemUpdates, overrides);
+            Logger.InfoFormat("Added new work item {0} for message with subject: {1} (conversation index:{2})", workItemId, message.Subject, message.ConversationIndex);
+
+            if (_config.WorkItemSettings.AttachOriginalMessage)
             {
-                // Since the work item *has* been created, failures in this stage are not treated as critical
-                var overrides = new OverridesExtractor(_config).GetOverrides(message);
-                TryApplyFieldOverrides(overrides, workItemId);
-                ProcessAttachments(message, workItemId);
-
-                if (_config.WorkItemSettings.AttachOriginalMessage)
+                try
                 {
+                    ProcessAttachments(message, workItemId);
                     string originalMessageFile = message.SaveToFile();
                     _workItemManager.AttachFiles(workItemId, new List<string> { originalMessageFile });
                 }
-            }
-            catch (Exception ex)
-            {
-                Logger.ErrorFormat("Exception caught while applying settings to work item {0}\n{1}", workItemId, ex);
+                catch (Exception ex)
+                {
+                    Logger.ErrorFormat("Exception caught while applying settings to work item {0}\n{1}", workItemId, ex);
+                }
             }
 
             _ackEmailHandler.SendAckEmail(message, workItemId.ToString(CultureInfo.InvariantCulture));
